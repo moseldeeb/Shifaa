@@ -1,0 +1,6 @@
+@Shifaa_HostAddress = http://localhost:5049
+
+GET {{Shifaa_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
