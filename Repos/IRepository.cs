@@ -12,13 +12,13 @@ namespace Shifaa.Repos
         Task<IEnumerable<T>> GetAsync(
             Expression<Func<T, bool>>? expression = null,
             Expression<Func<T, object>>[]? includes = null,
-            bool trackd = true,
+            bool tracked = true,
             CancellationToken cancellationToken = default
             );
         Task<T?> GetOneAsync(
             Expression<Func<T, bool>>? expressions = null,
             Expression<Func<T, object>>?[] includes = null,
-            bool trackd = true,
+            bool tracked = true,
             CancellationToken cancellationToken = default
             );
 

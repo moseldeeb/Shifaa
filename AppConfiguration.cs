@@ -1,9 +1,10 @@
 ﻿
 
-using Shifaa.JwtFeatures;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Shifaa.JwtFeatures;
+using Shifaa.Services;
 
 namespace Shifaa
 {
@@ -36,18 +37,27 @@ namespace Shifaa
             });
 
             services.AddTransient<IEmailSender, EmailSender>();
-            services.AddScoped<IRepository<Category>, Repository<Category>>();
-            //services.AddSingleton<IRepository<Category>, Repository<Category>>();
-            //services.AddTransient<IRepository<Category>, Repository<Category>>();
-            services.AddScoped<IRepository<Brand>, Repository<Brand>>();
-            services.AddScoped<IRepository<ProductSubImage>, Repository<ProductSubImage>>();
-            services.AddScoped<IRepository<ProductColor>, Repository<ProductColor>>();
-            services.AddScoped<IRepository<Cart>, Repository<Cart>>();
-            services.AddScoped<IRepository<Promotion>, Repository<Promotion>>();
-            services.AddScoped<IRepository<Order>, Repository<Order>>();
-            services.AddScoped<IRepository<OrderItem>, Repository<OrderItem>>();
+            
+            // Healthcare Models Repositories (Shifaa)
+            services.AddScoped<IRepository<Member>, Repository<Member>>();
+            services.AddScoped<IRepository<Doctor>, Repository<Doctor>>();
+            services.AddScoped<IRepository<MedicalCenter>, Repository<MedicalCenter>>();
+            services.AddScoped<IRepository<Caregiver>, Repository<Caregiver>>();
+            services.AddScoped<IRepository<DoctorSchedule>, Repository<DoctorSchedule>>();
+            services.AddScoped<IRepository<TimeSlot>, Repository<TimeSlot>>();
+            services.AddScoped<IRepository<Appointment>, Repository<Appointment>>();
+            services.AddScoped<IRepository<Prescription>, Repository<Prescription>>();
+            services.AddScoped<IRepository<PrescriptionItem>, Repository<PrescriptionItem>>();
+            services.AddScoped<IRepository<MedicalRecord>, Repository<MedicalRecord>>();
+            services.AddScoped<IRepository<HealthReading>, Repository<HealthReading>>();
+            services.AddScoped<IRepository<AIAlert>, Repository<AIAlert>>();
+            services.AddScoped<IRepository<TrackingLog>, Repository<TrackingLog>>();
+            services.AddScoped<IRepository<Notification>, Repository<Notification>>();
+            services.AddScoped<IRepository<Review>, Repository<Review>>();
+            services.AddScoped<IRepository<GuardianMember>, Repository<GuardianMember>>();
             services.AddScoped<IRepository<ApplicationUserOTP>, Repository<ApplicationUserOTP>>();
-            services.AddScoped<IProductRepository, ProductRepository>();
+
+            services.AddScoped<IFileService, FileService>();
             services.AddScoped<IJwtHandler, JwtHandler>();
             services.AddScoped<IDBInitializr, DBInitializr>();
         }

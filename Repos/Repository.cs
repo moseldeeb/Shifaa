@@ -30,7 +30,7 @@ namespace Shifaa.Repos
         public async Task<IEnumerable<T>> GetAsync(
             Expression<Func<T, bool>>? expression = null,
             Expression<Func<T, object>>[]? includes = null,
-            bool trackd = true,
+            bool tracked = true,
             CancellationToken cancellationToken = default
             )
         {
@@ -46,7 +46,7 @@ namespace Shifaa.Repos
                     entities = entities.Include(include);
                 }
             }
-            if (!trackd)
+            if (!tracked)
             {
                 entities = entities.AsNoTracking();
             }
@@ -55,11 +55,11 @@ namespace Shifaa.Repos
         public async Task<T?> GetOneAsync(
             Expression<Func<T, bool>>? expressions = null,
             Expression<Func<T, object>>?[] includes = null,
-            bool trackd = true,
+            bool tracked = true,
             CancellationToken cancellationToken = default
             )
         {
-            var entity = (await GetAsync(expressions, includes, trackd, cancellationToken)).FirstOrDefault();
+            var entity = (await GetAsync(expressions, includes, tracked, cancellationToken)).FirstOrDefault();
             return entity;
         }
 

@@ -35,8 +35,10 @@ namespace Shifaa.Utilities
                 {
                     _roleManager.CreateAsync(new(SD.SUPER_ADMIN_ROLE)).GetAwaiter().GetResult();
                     _roleManager.CreateAsync(new(SD.ADMIN_ROLE)).GetAwaiter().GetResult();
-                    _roleManager.CreateAsync(new(SD.EMPLOYEE_ROLE)).GetAwaiter().GetResult();
-                    _roleManager.CreateAsync(new(SD.CUSTOMER_ROLE)).GetAwaiter().GetResult();
+                    _roleManager.CreateAsync(new(SD.DOCTOR_ROLE)).GetAwaiter().GetResult();
+                    _roleManager.CreateAsync(new(SD.MEMBER_ROLE)).GetAwaiter().GetResult();
+                    _roleManager.CreateAsync(new(SD.CARE_GIVER_ROLE)).GetAwaiter().GetResult();
+                    _roleManager.CreateAsync(new(SD.MEDICAL_CENTER_ROLE)).GetAwaiter().GetResult();
 
                     _userManager.CreateAsync(new ApplicationUser()
                     {
