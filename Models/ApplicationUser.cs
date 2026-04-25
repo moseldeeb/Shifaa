@@ -28,6 +28,8 @@ namespace Shifaa.Models
         [StringLength(10, ErrorMessage = "Language code cannot exceed 10 characters")]
         public string? Language { get; set; } = "ar";
 
+        public Enums.UserType UserType { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; } = false;

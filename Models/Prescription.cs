@@ -14,8 +14,8 @@ namespace Shifaa.Models
         public int MemberId { get; set; }
         public Member Member { get; set; }
 
-        [Required(ErrorMessage = "Appointment ID is required")]
-        public int AppointmentId { get; set; }
+        // Nullable — prescription can exist without a formal appointment
+        public int? AppointmentId { get; set; }
         public Appointment Appointment { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

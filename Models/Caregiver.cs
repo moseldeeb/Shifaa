@@ -14,9 +14,6 @@ namespace Shifaa.Models
 
         [StringLength(20, ErrorMessage = "Gender cannot exceed 20 characters")]
         public string? Gender { get; set; }
-
-        [StringLength(100, ErrorMessage = "Relationship type cannot exceed 100 characters")]
-        public string? RelationshipType { get; set; } // "Father", "Son", "Nurse" etc
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation

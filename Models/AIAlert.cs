@@ -26,11 +26,10 @@ namespace Shifaa.Models
         public decimal ThresholdValue { get; set; }
         public string RecommendedAction { get; set; }
         public DateTime TriggeredAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsAcknowledged { get; set; } = false;
         public DateTime? AcknowledgedAt { get; set; }
-
-    
 
         // Navigation
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();

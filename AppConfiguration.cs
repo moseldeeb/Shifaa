@@ -57,6 +57,8 @@ namespace Shifaa
             services.AddScoped<IRepository<GuardianMember>, Repository<GuardianMember>>();
             services.AddScoped<IRepository<ApplicationUserOTP>, Repository<ApplicationUserOTP>>();
 
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IFileService, FileService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IJwtHandler, JwtHandler>();
             services.AddScoped<IDBInitializr, DBInitializr>();

@@ -42,7 +42,7 @@ namespace Shifaa.Utilities
 
                     _userManager.CreateAsync(new ApplicationUser()
                     {
-                        Email = "SuperAdmin@eraasoft.com",
+                        Email = "SuperAdmin@Shifaa.com",
                         UserName = "SuperAdmin",
                         FirstName = "Super",
                         LastName = "Admin",

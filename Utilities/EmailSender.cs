@@ -12,11 +12,11 @@ namespace Shifaa.Utilities
             {
                 EnableSsl = true,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential("bahaa.test99@gmail.com", "nfxl rbcy ithe gvrk")
+                Credentials = new NetworkCredential("shefaaentity@gmail.com", "nfxl rbcy ithe gvrk")
             };
 
             return client.SendMailAsync(
-                new MailMessage(from: "bahaa.test99@gmail.com",
+                new MailMessage(from: "shefaaentity@gmail.com",
                                 to: email,
                                 subject,
                                 htmlMessage

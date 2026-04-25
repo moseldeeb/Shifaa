@@ -21,7 +21,7 @@ namespace Shifaa.Models
         // Stores only the file name + extension e.g. "3f92a1b4-ecb7.pdf"
         // Physical file saved to wwwroot/MedicalRecords/Members/{MemberId}/
         [Required(ErrorMessage = "File is required")]
-        [StringLength(1000, MinimumLength = 10, ErrorMessage = "File must be ")]
+        [StringLength(260, ErrorMessage = "File name cannot exceed 260 characters")]
         public string FileName { get; set; }
 
         [Required(ErrorMessage = "File type is required")]

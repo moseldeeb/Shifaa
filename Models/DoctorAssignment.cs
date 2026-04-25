@@ -14,7 +14,10 @@ namespace Shifaa.Models
 
         public DoctorAssignmentStatus Status { get; set; }
             = DoctorAssignmentStatus.Pending;
-
+        
+        // Fee set by Medical Center when assigning the doctor
+        // Can differ per facility
+        public decimal? ConsultationFee { get; set; }
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
         public DateTime? AcceptedAt { get; set; }
         public DateTime? TerminatedAt { get; set; }

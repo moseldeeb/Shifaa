@@ -2,7 +2,15 @@
 {
     public class Enums
     {
-          public enum FacilityType
+        public enum UserType
+        {
+            Member,
+            Caregiver,
+            Doctor,
+            MedicalCenter
+
+        }
+        public enum FacilityType
         {
             Clinic = 1,
             DiagnosisCenter = 2,
@@ -112,7 +120,7 @@
         {
             BeforeEating = 1,
             AfterEating = 2,
-            WithFood = 3,
+            EmptyStomach = 3,
             AnyTime = 4
         }
 

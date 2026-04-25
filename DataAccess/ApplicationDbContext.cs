@@ -128,7 +128,6 @@ namespace Shifaa.DataAccess
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.UserId).IsRequired();
                 entity.Property(e => e.Gender).HasMaxLength(20);
-                entity.Property(e => e.RelationshipType).HasMaxLength(100);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
                 entity.HasIndex(e => e.UserId).IsUnique();
@@ -143,15 +142,41 @@ namespace Shifaa.DataAccess
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.UserId).IsRequired();
 
-                // NO MedicalCenterId here — doctor is standalone
+                // Verification — required for Admin approval
+                entity.Property(e => e.MedicalSyndicateId)
+                      .IsRequired()
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.NationalId)
+                      .IsRequired()
+                      .HasMaxLength(14);
+
+                // File names only — no URLs
+                entity.Property(e => e.SyndicateCardImageFile)
+                      .IsRequired()
+                      .HasMaxLength(260);
+
+                entity.Property(e => e.MedicalDegreeCertificateFile)
+                      .IsRequired()
+                      .HasMaxLength(260);
+
+                entity.HasIndex(e => e.MedicalSyndicateId).IsUnique();
+                entity.HasIndex(e => e.NationalId).IsUnique();
+
+                // Professional info
                 entity.Property(e => e.Specialty).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.ConsultationFee).HasPrecision(8, 2);
                 entity.Property(e => e.YearsOfExperience).HasDefaultValue(0);
                 entity.Property(e => e.Bio).HasMaxLength(2000);
-                entity.Property(e => e.IsAvailable).HasDefaultValue(true);
+                entity.Property(e => e.IsAvailable).HasDefaultValue(false);
                 entity.Property(e => e.Rating).HasPrecision(3, 2).HasDefaultValue(0.0);
                 entity.Property(e => e.TotalRatings).HasDefaultValue(0);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                // Syndicate ID must be unique across the platform
+                entity.HasIndex(e => e.MedicalSyndicateId).IsUnique();
+
+                // National ID must be unique
+                entity.HasIndex(e => e.NationalId).IsUnique();
 
                 entity.HasIndex(e => e.UserId).IsUnique();
                 entity.HasIndex(e => e.Specialty);
@@ -206,6 +231,7 @@ namespace Shifaa.DataAccess
                       .WithMany(mc => mc.DoctorAssignments)
                       .HasForeignKey(e => e.MedicalCenterId)
                       .OnDelete(DeleteBehavior.Restrict);
+                entity.Property(e => e.ConsultationFee).HasPrecision(8, 2);
 
                 // Prevent duplicate active assignments
                 entity.HasIndex(e => new { e.DoctorId, e.MedicalCenterId }).IsUnique();
@@ -236,6 +262,7 @@ namespace Shifaa.DataAccess
                       .WithMany(m => m.Caregivers)
                       .HasForeignKey(e => e.MemberId)
                       .OnDelete(DeleteBehavior.NoAction);
+                entity.Property(e => e.RelationshipType).HasMaxLength(100);
 
                 // One caregiver cannot send duplicate requests to same member
                 entity.HasIndex(e => new { e.CaregiverId, e.MemberId }).IsUnique();
@@ -527,8 +554,8 @@ namespace Shifaa.DataAccess
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.UserId).IsRequired();
                 entity.Property(e => e.Type).IsRequired();
-                entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+                entity.Property(e => e.Title).HasMaxLength(200).IsRequired(false);
+                entity.Property(e => e.Message).IsRequired().HasMaxLength(2000);
                 entity.Property(e => e.IsRead).HasDefaultValue(false);
 
                 // For actionable notifications — stores JSON e.g. {"requestId": 5}

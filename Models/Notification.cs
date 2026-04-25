@@ -29,5 +29,9 @@ namespace Shifaa.Models
         // Stores JSON payload e.g. { "requestId": 5 }
         public string? ActionPayload { get; set; }
         public bool IsActioned { get; set; } = false;
+
+        // Links notification to source entity
+        public int? RelatedEntityId { get; set; }
+        public string? RelatedEntityType { get; set; } // "GuardianMember", "DoctorAssignment", etc.
     }
 }

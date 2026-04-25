@@ -15,8 +15,8 @@ namespace Shifaa.Models
         public ReadingType ReadingType { get; set; } // BP, Glucose, Temperature, etc.
 
         [Required(ErrorMessage = "Value is required")]
-        [StringLength(50, MinimumLength = 1, ErrorMessage = "Value must be between 1 and 50 characters")]
-        public string Value { get; set; } // Can be "120/80" for BP or "95" for glucose
+        [Range(0.01, 9999.99, ErrorMessage = "Value must be between 0.01 and 9999.99")]
+        public decimal Value { get; set; } // Decimal for accurate health readings (e.g., 120.5, 95.2)
 
         [Required(ErrorMessage = "Unit is required")]
         [StringLength(50, MinimumLength = 1, ErrorMessage = "Unit must be between 1 and 50 characters")]

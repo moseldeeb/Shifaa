@@ -29,7 +29,7 @@
 	<ItemGroup>
 	  <Folder Include="Areas\Doctor\" />
 	  <Folder Include="Areas\MedicalCenter\" />
-	  <Folder Include="Areas\CareGiver\" />
+	  <Folder Include="Areas\Caregiver\" />
 	</ItemGroup>
 
 </Project>

@@ -15,6 +15,9 @@ namespace Shifaa.Models
         public int MemberId { get; set; }
         public Member Member { get; set; }
 
+        // Per-relationship field — caregiver can be "Father" to one member
+        // and "Friend" to another member
+        public string? RelationshipType { get; set; }
         [Required(ErrorMessage = "Link status is required")]
         public LinkStatus Status { get; set; } = LinkStatus.Pending;
 
