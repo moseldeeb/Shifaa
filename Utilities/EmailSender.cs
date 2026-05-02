@@ -11,8 +11,9 @@ namespace Shifaa.Utilities
             var client = new SmtpClient("smtp.gmail.com", 587)
             {
                 EnableSsl = true,
+                
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential("shefaaentity@gmail.com", "nfxl rbcy ithe gvrk")
+                Credentials = new NetworkCredential("shefaaentity@gmail.com", "gvlc vkto trpa utcf")
             };
 
             return client.SendMailAsync(

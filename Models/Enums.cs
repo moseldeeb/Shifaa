@@ -7,7 +7,9 @@
             Member,
             Caregiver,
             Doctor,
-            MedicalCenter
+            MedicalCenter,
+            Admin,
+            SuperAdmin
 
         }
         public enum FacilityType

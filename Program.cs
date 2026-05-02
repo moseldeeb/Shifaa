@@ -89,11 +89,11 @@ namespace Shifaa
 
             var app = builder.Build();
 
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var dbInitializr = scope.ServiceProvider.GetRequiredService<IDBInitializr>();
-            //    dbInitializr.Initialize();
-            //}
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbInitializr = scope.ServiceProvider.GetRequiredService<IDBInitializr>();
+                dbInitializr.Initialize();
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

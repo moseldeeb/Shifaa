@@ -17,6 +17,7 @@ namespace Shifaa.Services
         private readonly IRepository<Caregiver> _caregiverRepository;
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IRepository<MedicalCenter> _medicalCenterRepository;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -27,7 +28,8 @@ namespace Shifaa.Services
             IRepository<Member> memberRepository,
             IRepository<Caregiver> caregiverRepository,
             IRepository<Doctor> doctorRepository,
-            IRepository<MedicalCenter> medicalCenterRepository)
+            IRepository<MedicalCenter> medicalCenterRepository,
+            ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _context = context;
@@ -38,26 +40,62 @@ namespace Shifaa.Services
             _caregiverRepository = caregiverRepository;
             _doctorRepository = doctorRepository;
             _medicalCenterRepository = medicalCenterRepository;
+            _logger = logger;
         }
 
         // ── MEMBER ───────────────────────────────────────────────────────
         public async Task<ServiceResult> RegisterMemberAsync(MemberRegisterRequest request)
         {
-            var user = BuildApplicationUser(request, UserType.Member);
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                    return ServiceResult.Fail(
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
 
-                await _userManager.AddToRoleAsync(user, "Member");
+                ApplicationUser user;
+                if (existingUser is not null && !existingUser.IsDeleted)
+                {
+                    // User already exists — just add them to member role and create profile
+                    user = existingUser;
 
-                // Create empty profile — member fills it after first login
-                await _memberRepository.AddAsync(new Member { UserId = user.Id });
-                await _memberRepository.CommitAsync();
+                    // Only add role if not already in it
+                    if (!await _userManager.IsInRoleAsync(user, SD.MEMBER_ROLE))
+                    {
+                        await _userManager.AddToRoleAsync(user, SD.MEMBER_ROLE);
+                    }
+
+                    // Check if member profile already exists
+                    var existingMember = await _memberRepository
+                        .GetOneAsync(m => m.UserId == user.Id);
+
+                    if (existingMember is null)
+                    {
+                        await _memberRepository.AddAsync(new Member 
+                        { 
+                            UserId = user.Id,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+                else
+                {
+                    // New user — create in AspNetUsers and add profile
+                    user = BuildApplicationUser(request, UserType.Member);
+                    var result = await _userManager.CreateAsync(user, request.Password);
+                    if (!result.Succeeded)
+                        return ServiceResult.Fail(
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    await _userManager.AddToRoleAsync(user, SD.MEMBER_ROLE);
+
+                    // Create empty profile — member fills it after first login
+                    await _memberRepository.AddAsync(new Member 
+                    { 
+                        UserId = user.Id,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 await SendEmailConfirmationAsync(user);
@@ -65,33 +103,68 @@ namespace Shifaa.Services
                 return ServiceResult.Ok(
                     "Registration successful. Please confirm your email to continue.");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering member: {Message}", ex.Message);
                 await transaction.RollbackAsync();
-                await CleanupUserAsync(user);
-                return ServiceResult.Fail("Registration failed. Please try again.", 500);
+                return ServiceResult.Fail($"Registration failed: {ex.Message}", 500);
             }
         }
 
         // ── CAREGIVER ─────────────────────────────────────────────────────
         public async Task<ServiceResult> RegisterCaregiverAsync(CaregiverRegisterRequest request)
         {
-            var user = BuildApplicationUser(request, UserType.Caregiver);
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                    return ServiceResult.Fail(
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
 
-                await _userManager.AddToRoleAsync(user, "Caregiver");
+                ApplicationUser user;
+                if (existingUser is not null && !existingUser.IsDeleted)
+                {
+                    // User already exists — just add them to caregiver role and create profile
+                    user = existingUser;
 
-                // Create empty profile — caregiver fills it after first login
-                // RelationshipType is NOT here — it's per GuardianMember link
-                await _caregiverRepository.AddAsync(new Caregiver { UserId = user.Id });
-                await _caregiverRepository.CommitAsync();
+                    // Only add role if not already in it
+                    if (!await _userManager.IsInRoleAsync(user, "Caregiver"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "Caregiver");
+                    }
+
+                    // Check if caregiver profile already exists
+                    var existingCaregiver = await _caregiverRepository
+                        .GetOneAsync(c => c.UserId == user.Id);
+
+                    if (existingCaregiver is null)
+                    {
+                        await _caregiverRepository.AddAsync(new Caregiver 
+                        { 
+                            UserId = user.Id,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+                else
+                {
+                    // New user — create in AspNetUsers and add profile
+                    user = BuildApplicationUser(request, UserType.Caregiver);
+                    var result = await _userManager.CreateAsync(user, request.Password);
+                    if (!result.Succeeded)
+                        return ServiceResult.Fail(
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    await _userManager.AddToRoleAsync(user, "Caregiver");
+
+                    // Create empty profile — caregiver fills it after first login
+                    // RelationshipType is NOT here — it's per GuardianMember link
+                    await _caregiverRepository.AddAsync(new Caregiver 
+                    { 
+                        UserId = user.Id,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 await SendEmailConfirmationAsync(user);
@@ -99,11 +172,11 @@ namespace Shifaa.Services
                 return ServiceResult.Ok(
                     "Registration successful. Please confirm your email to continue.");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering caregiver: {Message}", ex.Message);
                 await transaction.RollbackAsync();
-                await CleanupUserAsync(user);
-                return ServiceResult.Fail("Registration failed. Please try again.", 500);
+                return ServiceResult.Fail($"Registration failed: {ex.Message}", 500);
             }
         }
 
@@ -112,31 +185,70 @@ namespace Shifaa.Services
         // ConsultationFee NOT set here — Medical Center sets it during assignment
         public async Task<ServiceResult> RegisterDoctorAsync(DoctorRegisterRequest request)
         {
-            var user = BuildApplicationUser(request, UserType.Doctor);
-            user.PhoneNumber = request.PhoneNumber;
-            user.EmailConfirmed = false;  // inactive until Admin approves
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                    return ServiceResult.Fail(
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
 
-                await _userManager.AddToRoleAsync(user, "Doctor");
-
-                await _doctorRepository.AddAsync(new Doctor
+                ApplicationUser user;
+                if (existingUser is not null && !existingUser.IsDeleted)
                 {
-                    UserId = user.Id,
-                    Specialty = request.Specialty,
-                    YearsOfExperience = request.YearsOfExperience,
-                    Bio = request.Bio,
-                    IsAvailable = false   // Admin activates on approval
-                                          // ConsultationFee is NOT here
-                });
+                    // User already exists — just add them to doctor role and create profile
+                    user = existingUser;
+                    user.PhoneNumber = request.PhoneNumber;
 
-                await _doctorRepository.CommitAsync();
+                    // Only add role if not already in it
+                    if (!await _userManager.IsInRoleAsync(user, "Doctor"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "Doctor");
+                    }
+
+                    // Check if doctor profile already exists
+                    var existingDoctor = await _doctorRepository
+                        .GetOneAsync(d => d.UserId == user.Id);
+
+                    if (existingDoctor is null)
+                    {
+                        await _doctorRepository.AddAsync(new Doctor
+                        {
+                            UserId = user.Id,
+                            Specialty = request.Specialty,
+                            YearsOfExperience = request.YearsOfExperience,
+                            Bio = request.Bio,
+                            IsAvailable = false,   // Admin activates on approval
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    // Update existing user if needed
+                    await _userManager.UpdateAsync(user);
+                }
+                else
+                {
+                    // New user — create in AspNetUsers and add profile
+                    user = BuildApplicationUser(request, UserType.Doctor);
+                    user.PhoneNumber = request.PhoneNumber;
+                    user.EmailConfirmed = false;  // inactive until Admin approves
+
+                    var result = await _userManager.CreateAsync(user, request.Password);
+                    if (!result.Succeeded)
+                        return ServiceResult.Fail(
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    await _userManager.AddToRoleAsync(user, "Doctor");
+
+                    await _doctorRepository.AddAsync(new Doctor
+                    {
+                        UserId = user.Id,
+                        Specialty = request.Specialty,
+                        YearsOfExperience = request.YearsOfExperience,
+                        Bio = request.Bio,
+                        IsAvailable = false,   // Admin activates on approval
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 // Notify Admin to review
@@ -154,11 +266,11 @@ namespace Shifaa.Services
                     "Your registration request has been submitted and is pending Admin review. " +
                     "You will receive an email once approved.");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering doctor: {Message}", ex.Message);
                 await transaction.RollbackAsync();
-                await CleanupUserAsync(user);
-                return ServiceResult.Fail("Registration failed. Please try again.", 500);
+                return ServiceResult.Fail($"Registration failed: {ex.Message}", 500);
             }
         }
 
@@ -167,33 +279,76 @@ namespace Shifaa.Services
         public async Task<ServiceResult> RegisterMedicalCenterAsync(
             MedicalCenterRegisterRequest request)
         {
-            var user = BuildApplicationUser(request, UserType.MedicalCenter);
-            user.PhoneNumber = request.PhoneNumber;
-            user.EmailConfirmed = false;  // inactive until Admin approves
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                    return ServiceResult.Fail(
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
 
-                await _userManager.AddToRoleAsync(user, "MedicalCenter");
-
-                await _medicalCenterRepository.AddAsync(new MedicalCenter
+                ApplicationUser user;
+                if (existingUser is not null && !existingUser.IsDeleted)
                 {
-                    UserId = user.Id,
-                    FacilityName = request.FacilityName,
-                    FacilityType = request.FacilityType,
-                    Address = request.Address,
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
-                    WorkingHours = request.WorkingHours,
-                    IsVerified = false   // Admin sets true on approval
-                });
+                    // User already exists — just add them to medical center role and create profile
+                    user = existingUser;
+                    user.PhoneNumber = request.PhoneNumber;
 
-                await _medicalCenterRepository.CommitAsync();
+                    // Only add role if not already in it
+                    if (!await _userManager.IsInRoleAsync(user, "MedicalCenter"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "MedicalCenter");
+                    }
+
+                    // Check if medical center profile already exists
+                    var existingMedicalCenter = await _medicalCenterRepository
+                        .GetOneAsync(mc => mc.UserId == user.Id);
+
+                    if (existingMedicalCenter is null)
+                    {
+                        await _medicalCenterRepository.AddAsync(new MedicalCenter
+                        {
+                            UserId = user.Id,
+                            FacilityName = request.FacilityName,
+                            FacilityType = request.FacilityType,
+                            Address = request.Address,
+                            Latitude = request.Latitude,
+                            Longitude = request.Longitude,
+                            WorkingHours = request.WorkingHours,
+                            IsVerified = false,   // Admin sets true on approval
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    // Update existing user if needed
+                    await _userManager.UpdateAsync(user);
+                }
+                else
+                {
+                    // New user — create in AspNetUsers and add profile
+                    user = BuildApplicationUser(request, UserType.MedicalCenter);
+                    user.PhoneNumber = request.PhoneNumber;
+                    user.EmailConfirmed = false;  // inactive until Admin approves
+
+                    var result = await _userManager.CreateAsync(user, request.Password);
+                    if (!result.Succeeded)
+                        return ServiceResult.Fail(
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+
+                    await _userManager.AddToRoleAsync(user, "MedicalCenter");
+
+                    await _medicalCenterRepository.AddAsync(new MedicalCenter
+                    {
+                        UserId = user.Id,
+                        FacilityName = request.FacilityName,
+                        FacilityType = request.FacilityType,
+                        Address = request.Address,
+                        Latitude = request.Latitude,
+                        Longitude = request.Longitude,
+                        WorkingHours = request.WorkingHours,
+                        IsVerified = false,   // Admin sets true on approval
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 await _emailSender.SendEmailAsync(
@@ -209,11 +364,11 @@ namespace Shifaa.Services
                     "Your registration request has been submitted and is pending Admin review. " +
                     "You will be notified once your facility is verified.");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error registering medical center: {Message}", ex.Message);
                 await transaction.RollbackAsync();
-                await CleanupUserAsync(user);
-                return ServiceResult.Fail("Registration failed. Please try again.", 500);
+                return ServiceResult.Fail($"Registration failed: {ex.Message}", 500);
             }
         }
 
@@ -269,7 +424,7 @@ namespace Shifaa.Services
                 .GetAsync(otp => otp.ApplicationUserId == user.Id &&
                                  otp.CreatedAt > DateTime.UtcNow.AddHours(-24));
 
-            if (recentOtps.Count() >= 10)
+            if (recentOtps?.Count() >= 10)
                 return ServiceResult.Fail(
                     "Too many OTP requests. Please try again tomorrow.", 429);
 
@@ -355,6 +510,10 @@ namespace Shifaa.Services
                     "Invalid tokens.", 401);
 
             var principal = _jwtHandler.GetPrincipalFromExpiredToken(request.AccessToken);
+            if (principal is null)
+                return ServiceResult<AuthenticatedResponse>.Fail(
+                    "Invalid token.", 401);
+            
             var userId = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))

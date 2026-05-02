@@ -36,7 +36,7 @@ namespace Shifaa.Models
 
         [StringLength(500, ErrorMessage = "Website URL cannot exceed 500 characters")]
         public string? Website { get; set; }
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
 
         public bool IsVerified { get; set; } = false; // Admin approves
 

@@ -42,7 +42,7 @@ namespace Shifaa.Models
         [Range(0, int.MaxValue, ErrorMessage = "Total ratings must be a positive number")]
         public int TotalRatings { get; set; } = 0;
 
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
 
 
         // Navigation

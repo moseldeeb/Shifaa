@@ -14,7 +14,7 @@ namespace Shifaa.Models
 
         [StringLength(20, ErrorMessage = "Gender cannot exceed 20 characters")]
         public string? Gender { get; set; }
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
 
         // Navigation
         public ICollection<GuardianMember> Members { get; set; } = new List<GuardianMember>();

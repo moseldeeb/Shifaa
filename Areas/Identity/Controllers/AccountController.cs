@@ -1,13 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Shifaa.DTOs.Response;
-using Shifaa.JwtFeatures;
+﻿using Microsoft.AspNetCore.Mvc;
 using Shifaa.Services;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Shifaa.Areas.Identity.Controllers
 {

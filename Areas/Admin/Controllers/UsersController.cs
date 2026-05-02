@@ -1,12 +1,7 @@
 ﻿using Mapster;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Mapster;
-using Shifaa.Models;
-using Shifaa.DTOs.Response;
-using Shifaa.Utilities;
 
 namespace Shifaa.Areas.Admin.Controllers
 {

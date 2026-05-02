@@ -49,7 +49,7 @@ namespace Shifaa.Models
         public double? LastLongitude { get; set; }
 
         public DateTime? LastLocationUpdate { get; set; }
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
         // Navigation
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();

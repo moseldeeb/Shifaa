@@ -43,10 +43,13 @@ namespace Shifaa.Utilities
                     _userManager.CreateAsync(new ApplicationUser()
                     {
                         Email = "SuperAdmin@Shifaa.com",
-                        UserName = "SuperAdmin",
+                        UserName = "SuperAdmin@Shifaa.com",
                         FirstName = "Super",
                         LastName = "Admin",
                         EmailConfirmed = true,
+                        UserType = Enums.UserType.SuperAdmin,     // ← add this
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = false
                     }, "Admin@123").GetAwaiter().GetResult();
                     var user = _userManager.FindByNameAsync("SuperAdmin").GetAwaiter().GetResult();
                     _userManager.AddToRoleAsync(user, SD.SUPER_ADMIN_ROLE).GetAwaiter().GetResult();
