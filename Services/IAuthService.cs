@@ -7,10 +7,12 @@
         Task<ServiceResult> RegisterDoctorAsync(DoctorRegisterRequest request);
         Task<ServiceResult> RegisterMedicalCenterAsync(MedicalCenterRegisterRequest request);
         Task<ServiceResult<AuthenticatedResponse>> LoginAsync(LoginRequest request);
+        Task<ServiceResult<AuthenticatedResponse>> SwitchRoleAsync(string userId, Role newRole);
         Task<ServiceResult> ForgotPasswordAsync(string email);
         Task<ServiceResult> ValidateOtpAsync(ValidateOTPRequest request);
         Task<ServiceResult> ResetPasswordAsync(ResetPasswordRequest request);
         Task<ServiceResult<AuthenticatedResponse>> RefreshTokenAsync(TokenApiRequest request);
+        Task<ServiceResult> ConfirmEmailAsync(string userId, string token);
     }
 
     // Generic result wrapper — keeps controller responses consistent

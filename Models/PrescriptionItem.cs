@@ -23,7 +23,6 @@ namespace Shifaa.Models
         [StringLength(200, MinimumLength = 1, ErrorMessage = "Frequency must be between 1 and 200 characters")]
         public string Frequency { get; set; } // "Twice daily", "Once at night", etc.
 
-        [StringLength(100, ErrorMessage = "Meal timing cannot exceed 100 characters")]
         public MealTiming MealTiming { get; set; } // "Before meal", "After meal", "With meal"
 
         public PrescriptionDays Days { get; set; } // Monday, Tuesday, etc.

@@ -59,7 +59,6 @@ namespace Shifaa
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IFileService, FileService>();
-            services.AddScoped<IFileService, FileService>();
             services.AddScoped<IJwtHandler, JwtHandler>();
             services.AddScoped<IDBInitializr, DBInitializr>();
         }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Shifaa.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Shifaa.Areas.Identity.Controllers
 {
@@ -55,6 +56,20 @@ namespace Shifaa.Areas.Identity.Controllers
             return StatusCode(result.StatusCode, new { success = result.Success, message = result.Message, data = result.Data });
         }
 
+        [HttpPost("switch-role")]
+        [Authorize]
+        public async Task<IActionResult> SwitchRole([FromBody] SwitchRoleRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { success = false, message = "User not authenticated." });
+
+            var result = await _authService.SwitchRoleAsync(userId, request.NewRole);
+            return StatusCode(result.StatusCode, new { success = result.Success, message = result.Message, data = result.Data });
+        }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgetPasswordRequest request)
         {
@@ -85,6 +100,16 @@ namespace Shifaa.Areas.Identity.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var result = await _authService.RefreshTokenAsync(request);
             return StatusCode(result.StatusCode, new { success = result.Success, message = result.Message, data = result.Data });
+        }
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+        {
+            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.Token))
+                return BadRequest(new { success = false, message = "UserId and Token are required." });
+
+            var result = await _authService.ConfirmEmailAsync(request.UserId, request.Token);
+            return StatusCode(result.StatusCode,
+                new { success = result.Success, message = result.Message });
         }
     }
 }

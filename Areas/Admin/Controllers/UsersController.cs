@@ -21,8 +21,8 @@ namespace Shifaa.Areas.Admin.Controllers
         public IActionResult GetAll()
         {
             var users = _userManager.Users.ToList();
-            var userResponces = users.Adapt<IEnumerable<UserResponse>>();
-            return Ok(users);
+            var userResponces = users.Adapt<IEnumerable<ApplicationUserResponse>>();
+            return Ok(userResponces);
         }
         [HttpPut("LockUnLock/{id}")]
         public async Task<IActionResult> LockUnLock(string id)

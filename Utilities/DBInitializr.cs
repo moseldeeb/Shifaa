@@ -51,7 +51,7 @@ namespace Shifaa.Utilities
                         CreatedAt = DateTime.UtcNow,
                         IsDeleted = false
                     }, "Admin@123").GetAwaiter().GetResult();
-                    var user = _userManager.FindByNameAsync("SuperAdmin").GetAwaiter().GetResult();
+                    var user = _userManager.FindByNameAsync("SuperAdmin@Shifaa.com").GetAwaiter().GetResult();
                     _userManager.AddToRoleAsync(user, SD.SUPER_ADMIN_ROLE).GetAwaiter().GetResult();
 
                 }

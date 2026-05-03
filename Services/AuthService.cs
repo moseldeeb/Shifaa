@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Shifaa.JwtFeatures;
 using Shifaa.Repos;
 using static Shifaa.Models.Enums;
@@ -18,6 +19,7 @@ namespace Shifaa.Services
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IRepository<MedicalCenter> _medicalCenterRepository;
         private readonly ILogger<AuthService> _logger;
+        private readonly IFileService _fileService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -29,7 +31,8 @@ namespace Shifaa.Services
             IRepository<Caregiver> caregiverRepository,
             IRepository<Doctor> doctorRepository,
             IRepository<MedicalCenter> medicalCenterRepository,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IFileService fileService)
         {
             _userManager = userManager;
             _context = context;
@@ -41,7 +44,9 @@ namespace Shifaa.Services
             _doctorRepository = doctorRepository;
             _medicalCenterRepository = medicalCenterRepository;
             _logger = logger;
+            _fileService = fileService;
         }
+        
 
         // ── MEMBER ───────────────────────────────────────────────────────
         public async Task<ServiceResult> RegisterMemberAsync(MemberRegisterRequest request)
@@ -185,6 +190,18 @@ namespace Shifaa.Services
         // ConsultationFee NOT set here — Medical Center sets it during assignment
         public async Task<ServiceResult> RegisterDoctorAsync(DoctorRegisterRequest request)
         {
+            var syndicateExists = await _context.Doctors
+                                 .AnyAsync(d => d.MedicalSyndicateId == request.MedicalSyndicateId);
+            if (syndicateExists)
+                return ServiceResult.Fail(
+                    "A doctor with this Medical Syndicate ID is already registered.", 400);
+
+            var nationalIdExists = await _context.Doctors
+                .AnyAsync(d => d.NationalId == request.NationalId);
+            if (nationalIdExists)
+                return ServiceResult.Fail(
+                    "A doctor with this National ID is already registered.", 400);
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -237,13 +254,23 @@ namespace Shifaa.Services
 
                     await _userManager.AddToRoleAsync(user, "Doctor");
 
+                    var folderPath = $"Uploads/DoctorVerification/{user.Id}";
+                    var syndicateCardFile = await _fileService
+                        .SaveFileAsync(request.SyndicateCardImage, folderPath);
+                    var degreeFile = await _fileService
+                        .SaveFileAsync(request.MedicalDegreeCertificate, folderPath);
+
                     await _doctorRepository.AddAsync(new Doctor
                     {
                         UserId = user.Id,
+                        MedicalSyndicateId = request.MedicalSyndicateId,
+                        NationalId = request.NationalId,
+                        SyndicateCardImageFile = syndicateCardFile,
+                        MedicalDegreeCertificateFile = degreeFile,
                         Specialty = request.Specialty,
                         YearsOfExperience = request.YearsOfExperience,
                         Bio = request.Bio,
-                        IsAvailable = false,   // Admin activates on approval
+                        IsAvailable = false,
                         CreatedAt = DateTime.UtcNow
                     });
                 }
@@ -391,7 +418,20 @@ namespace Shifaa.Services
                 return ServiceResult<AuthenticatedResponse>.Fail(
                     "Invalid email/username or password.", 401);
 
-            var accessToken = await _jwtHandler.GenerateAccessTokenAsync(user);
+            // Get all user roles
+            var userRoles = await _userManager.GetRolesAsync(user);
+
+            // Map role names to UserType enum
+            var availableRoles = MapRolesToUserType(userRoles.ToList());
+
+            // Validate that user has the requested role
+            var selectedRoleString = request.Role.ToString();
+            if (!userRoles.Contains(selectedRoleString))
+                return ServiceResult<AuthenticatedResponse>.Fail(
+                    $"User does not have the {selectedRoleString} role.", 400);
+
+            // Generate token with selected role only
+            var accessToken = await _jwtHandler.GenerateAccessTokenAsync(user, selectedRoleString);
             var refreshToken = _jwtHandler.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
@@ -402,7 +442,10 @@ namespace Shifaa.Services
                 new AuthenticatedResponse
                 {
                     AccessToken = accessToken,
-                    RefreshToken = refreshToken
+                    RefreshToken = refreshToken,
+                    SelectedRole = (UserType)(int)request.Role,
+                    AvailableRoles = availableRoles,
+                    RedirectUrl = GetRedirectUrl(request.Role)
                 },
                 "Login successful.");
         }
@@ -578,6 +621,20 @@ namespace Shifaa.Services
                 $"<p>Your confirmation token: <b>{token}</b></p>");
         }
 
+        public async Task<ServiceResult> ConfirmEmailAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null || user.IsDeleted)
+                return ServiceResult.Fail("User not found.", 404);
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+                return ServiceResult.Fail(
+                    string.Join(", ", result.Errors.Select(e => e.Description)), 400);
+
+            return ServiceResult.Ok("Email confirmed successfully. You can now log in.");
+        }
+
         /// <summary>
         /// Cleans up the ApplicationUser from Identity if the profile
         /// table insert failed inside the transaction — keeps DB consistent.
@@ -587,6 +644,71 @@ namespace Shifaa.Services
             var existingUser = await _userManager.FindByIdAsync(user.Id);
             if (existingUser is not null)
                 await _userManager.DeleteAsync(existingUser);
+        }
+
+        /// <summary>
+        /// Maps role names to UserType enum values
+        /// </summary>
+        private List<UserType> MapRolesToUserType(List<string> roles)
+        {
+            var userTypes = new List<UserType>();
+            foreach (var role in roles)
+            {
+                if (Enum.TryParse<UserType>(role, out var userType))
+                {
+                    userTypes.Add(userType);
+                }
+            }
+            return userTypes;
+        }
+
+        /// <summary>
+        /// Determines redirect URL based on user role
+        /// </summary>
+        private string GetRedirectUrl(Role role)
+        {
+            return role switch
+            {
+                Role.Member => "/member/dashboard",
+                Role.Caregiver => "/caregiver/dashboard",
+                Role.Doctor => "/doctor/dashboard",
+                Role.MedicalCenter => "/medical-center/dashboard",
+                _ => "/"
+            };
+        }
+
+        /// <summary>
+        /// Switches user to a different role for the current session
+        /// </summary>
+        public async Task<ServiceResult<AuthenticatedResponse>> SwitchRoleAsync(
+            string userId, Role newRole)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null || user.IsDeleted)
+                return ServiceResult<AuthenticatedResponse>.Fail("User not found.", 404);
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var newRoleString = newRole.ToString();
+
+            // Validate that user has the requested role
+            if (!userRoles.Contains(newRoleString))
+                return ServiceResult<AuthenticatedResponse>.Fail(
+                    $"User does not have the {newRoleString} role.", 400);
+
+            // Generate new token with the new role
+            var accessToken = await _jwtHandler.GenerateAccessTokenAsync(user, newRoleString);
+            var availableRoles = MapRolesToUserType(userRoles.ToList());
+
+            return ServiceResult<AuthenticatedResponse>.Ok(
+                new AuthenticatedResponse
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = user.RefreshToken, // Keep existing refresh token
+                    SelectedRole = (UserType)(int)newRole,
+                    AvailableRoles = availableRoles,
+                    RedirectUrl = GetRedirectUrl(newRole)
+                },
+                "Role switched successfully.");
         }
     }
 }

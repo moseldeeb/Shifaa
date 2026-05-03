@@ -17,21 +17,21 @@ namespace Shifaa.Configurations
                 .NewConfig()
                 .Map(dest => dest.FullName, src => $"{src.FirstName} {src.LastName}");
 
-            TypeAdapterConfig<ApplicationUser, UserResponse>
+            TypeAdapterConfig<ApplicationUser, ApplicationUserResponse>
                 .NewConfig()
                 .Map(dest => dest.FullName, src => $"{src.FirstName} {src.LastName}");
 
             // Healthcare Models Mappings
-            TypeAdapterConfig<Member, UserResponse>
+            TypeAdapterConfig<Member, ApplicationUserResponse>
                 .NewConfig();
 
-            TypeAdapterConfig<Doctor, UserResponse>
+            TypeAdapterConfig<Doctor, ApplicationUserResponse>
                 .NewConfig();
 
-            TypeAdapterConfig<MedicalCenter, UserResponse>
+            TypeAdapterConfig<MedicalCenter, ApplicationUserResponse>
                 .NewConfig();
 
-            TypeAdapterConfig<Caregiver, UserResponse>
+            TypeAdapterConfig<Caregiver, ApplicationUserResponse>
                 .NewConfig();
         }
     }

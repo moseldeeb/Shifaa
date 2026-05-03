@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static Shifaa.Models.Enums;
 
 namespace Shifaa.JwtFeatures
 {
@@ -40,6 +41,32 @@ namespace Shifaa.JwtFeatures
             {
                 Claims.Add(new Claim(ClaimTypes.Role, role));
             }
+
+            var tokeOptions = new JwtSecurityToken(
+                issuer: _JwtSettings["validIssuer"],
+                audience: _JwtSettings["validAudience"],
+                claims: Claims,
+                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_JwtSettings["ExpireTime"])),
+                signingCredentials: signinCredentials
+            );
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
+
+            return tokenString;
+        }
+
+        public async Task<string> GenerateAccessTokenAsync(ApplicationUser user, string selectedRole)
+        {
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_JwtSettings["securityKey"]));
+            var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+
+            var Claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier , user.Id),
+                new Claim("SelectedRole", selectedRole), // Track which role user is currently using
+                new Claim(ClaimTypes.Role, selectedRole) // Add only the selected role
+            };
 
             var tokeOptions = new JwtSecurityToken(
                 issuer: _JwtSettings["validIssuer"],
